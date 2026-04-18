@@ -23,7 +23,6 @@ class ManualPointsLayer(Points):
         self.events.add(history=Event)
         self.events.data.connect(self._on_data_change)
 
-
     def _snapshot_data(self) -> np.ndarray:
         return np.asarray(self.data).copy()
 
