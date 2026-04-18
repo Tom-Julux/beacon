@@ -7,7 +7,7 @@ from napari_beacon_layers.controls.manual_points_control import CustomQtManualPo
 
 
 class ManualPointsLayer(Points):
-    """Editable points layer with undo/redo history.
+    """Editable points layer with keyboard-driven undo/redo history.
 
     Emits a custom ``history`` event whenever the undo/redo state changes
     (new snapshot, undo, redo) so listeners can react to history updates.
