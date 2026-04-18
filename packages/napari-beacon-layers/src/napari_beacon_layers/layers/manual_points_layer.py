@@ -47,7 +47,9 @@ class ManualPointsLayer(Points):
 
     def _commit_staged_history(self):
         if self._staged_history:
-            self._append_to_undo_history(self._staged_history)
+            first_before = self._staged_history[0][0]
+            last_after = self._staged_history[-1][1]
+            self._append_to_undo_history((first_before, last_after))
             self._staged_history = []
 
     def _append_to_undo_history(self, item):
@@ -59,7 +61,7 @@ class ManualPointsLayer(Points):
         if self._block_history:
             self._staged_history.append(value)
         else:
-            self._append_to_undo_history([value])
+            self._append_to_undo_history(value)
 
     def _on_data_change(self, event=None):
         if hasattr(event, "action") and event.action in ["adding", "removing", "changing"]:
@@ -88,13 +90,13 @@ class ManualPointsLayer(Points):
             return False
 
         history_item = before.pop()
-        after.append(list(reversed(history_item)))
+        after.append(history_item)
 
         self._is_restoring_history = True
         try:
-            for previous_data, next_data in reversed(history_item):
-                restored = previous_data if undoing else next_data
-                self.data = restored.copy()
+            previous_data, next_data = history_item
+            restored = previous_data if undoing else next_data
+            self.data = restored.copy()
             self.selected_data = set()
         finally:
             self._is_restoring_history = False
