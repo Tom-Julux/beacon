@@ -1,0 +1,101 @@
+import numpy as np
+from napari.layers import Points
+from napari.utils.events import Event
+
+from napari._qt.layer_controls.qt_layer_controls_container import layer_to_controls
+from napari_beacon_layers.controls.manual_points_control import CustomQtManualPointsControls
+
+
+class ManualPointsLayer(Points):
+    """Editable points layer with undo/redo history."""
+
+    def __init__(self, data, *args, max_history=100, **kwargs):
+        super().__init__(data, *args, **kwargs)
+        self._max_history = max(1, int(max_history))
+        self._history = [self._snapshot_data()]
+        self._history_index = 0
+        self._is_restoring_history = False
+
+        self.events.add(history=Event)
+        self.events.data.connect(self._on_data_change)
+        self._bind_shortcuts()
+
+    def _bind_shortcuts(self):
+        @self.bind_key("Control-Z", overwrite=True)
+        def _undo(_viewer):
+            self.undo()
+
+        @self.bind_key("Meta-Z", overwrite=True)
+        def _undo_meta(_viewer):
+            self.undo()
+
+        @self.bind_key("Control-Y", overwrite=True)
+        def _redo(_viewer):
+            self.redo()
+
+        @self.bind_key("Control-Shift-Z", overwrite=True)
+        def _redo_shift(_viewer):
+            self.redo()
+
+        @self.bind_key("Meta-Shift-Z", overwrite=True)
+        def _redo_meta_shift(_viewer):
+            self.redo()
+
+    def _snapshot_data(self) -> np.ndarray:
+        return np.asarray(self.data).copy()
+
+    def _on_data_change(self, event=None):
+        if self._is_restoring_history:
+            return
+
+        current = self._snapshot_data()
+        if np.array_equal(current, self._history[self._history_index]):
+            return
+
+        self._history = self._history[: self._history_index + 1]
+        self._history.append(current)
+        self._history_index = len(self._history) - 1
+
+        if len(self._history) > self._max_history:
+            overflow = len(self._history) - self._max_history
+            self._history = self._history[overflow:]
+            self._history_index = max(0, self._history_index - overflow)
+
+        self.events.history()
+
+    @property
+    def can_undo(self) -> bool:
+        return self._history_index > 0
+
+    @property
+    def can_redo(self) -> bool:
+        return self._history_index < len(self._history) - 1
+
+    def _restore_history_state(self):
+        self._is_restoring_history = True
+        try:
+            self.data = self._history[self._history_index].copy()
+            self.selected_data = set()
+        finally:
+            self._is_restoring_history = False
+        self.refresh()
+
+    def undo(self) -> bool:
+        if not self.can_undo:
+            return False
+        self._history_index -= 1
+        self._restore_history_state()
+        self.events.history()
+        return True
+
+    def redo(self) -> bool:
+        if not self.can_redo:
+            return False
+        self._history_index += 1
+        self._restore_history_state()
+        self.events.history()
+        return True
+
+
+# register the custom layer controls
+layer_to_controls[ManualPointsLayer] = CustomQtManualPointsControls
