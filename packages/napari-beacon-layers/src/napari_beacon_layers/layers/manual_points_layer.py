@@ -10,7 +10,7 @@ class ManualPointsLayer(Points):
     """Editable points layer with undo/redo history.
 
     Emits a custom ``history`` event whenever the undo/redo state changes
-    (new snapshot, undo, redo) so UI controls can refresh enabled states.
+    (new snapshot, undo, redo) so listeners can react to history updates.
     """
 
     def __init__(self, data, *args, max_history=100, **kwargs):
