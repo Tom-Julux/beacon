@@ -31,10 +31,10 @@ class CustomQtManualPointsControls(QtPointsControls):
 
         self.layout().insertRow(0, QtWrappedLabel("History:"), history_widget)
 
-        def sync_buttons(_event=None):
+        def _sync_buttons(_event=None):
             self._undo_button.setEnabled(layer.can_undo)
             self._redo_button.setEnabled(layer.can_redo)
 
-        layer.events.history.connect(sync_buttons)
-        layer.events.data.connect(sync_buttons)
-        sync_buttons()
+        layer.events.history.connect(_sync_buttons)
+        layer.events.data.connect(_sync_buttons)
+        _sync_buttons()
