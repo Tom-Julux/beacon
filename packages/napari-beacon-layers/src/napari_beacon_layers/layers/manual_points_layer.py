@@ -64,7 +64,7 @@ class ManualPointsLayer(Points):
         if len(self._history) > self._max_history:
             overflow = len(self._history) - self._max_history
             self._history = self._history[overflow:]
-            self._history_index = max(0, self._history_index - overflow)
+            self._history_index = len(self._history) - 1
 
         self.events.history()
 
