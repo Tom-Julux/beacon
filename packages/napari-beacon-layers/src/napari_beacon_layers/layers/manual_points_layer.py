@@ -22,24 +22,15 @@ class ManualPointsLayer(Points):
 
         self.events.add(history=Event)
         self.events.data.connect(self._on_data_change)
-        self._bind_shortcuts()
 
-    def _bind_shortcuts(self):
-        def _bind_shortcut(shortcut, action):
-            @self.bind_key(shortcut, overwrite=True)
-            def _run(_viewer):
-                action()
-
-        for shortcut in ("Control-Z", "Meta-Z"):
-            _bind_shortcut(shortcut, self.undo)
-
-        for shortcut in ("Control-Y", "Control-Shift-Z", "Meta-Shift-Z"):
-            _bind_shortcut(shortcut, self.redo)
 
     def _snapshot_data(self) -> np.ndarray:
         return np.asarray(self.data).copy()
 
     def _on_data_change(self, event=None):
+        if hasattr(event, "action") and event.action in ["adding", "removing", "changing"]:
+            return
+
         if self._is_restoring_history:
             return
 
@@ -95,3 +86,6 @@ class ManualPointsLayer(Points):
 
 # register the custom layer controls
 layer_to_controls[ManualPointsLayer] = CustomQtManualPointsControls
+
+ManualPointsLayer.bind_key("Control-Z", ManualPointsLayer.undo)
+ManualPointsLayer.bind_key("Control-Shift-Z", ManualPointsLayer.redo)
