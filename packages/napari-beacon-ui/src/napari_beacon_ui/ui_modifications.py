@@ -33,8 +33,12 @@ def set_coronal(viewer):
     viewer.dims.order = (1, 0, 2)
 
 
-def set_saggital(viewer):
+def set_sagittal(viewer):
     viewer.dims.order = (2, 0, 1)
+
+
+# Backward-compatible alias
+set_saggital = set_sagittal
 
 
 def enable_orientation_buttons(viewer):
@@ -45,7 +49,7 @@ def enable_orientation_buttons(viewer):
     viewer_buttons = viewer.window._qt_viewer._viewerButtons
     layout = viewer_buttons.layout()
 
-    for text, callback in (("A", set_axial), ("C", set_coronal), ("S", set_saggital)):
+    for text, callback in (("A", set_axial), ("C", set_coronal), ("S", set_sagittal)):
         button = QPushButton(text)
         button.clicked.connect(lambda _checked=False, cb=callback: cb(viewer))
         button.setStyleSheet(

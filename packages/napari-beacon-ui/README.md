@@ -4,7 +4,7 @@ Utilities to toggle BEACON-specific napari UI customizations from the command pa
 
 ## Features
 
-- Add/remove axial, coronal, and saggital orientation buttons in the napari viewer toolbar.
+- Add/remove axial, coronal, and sagittal orientation buttons in the napari viewer toolbar.
 - Hide/show default napari viewer toolbar buttons.
 - Hide/show layer-list action buttons and disable/restore delete/backspace/enter key handling in the layer list.
 
