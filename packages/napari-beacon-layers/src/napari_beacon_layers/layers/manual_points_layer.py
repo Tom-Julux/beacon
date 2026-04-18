@@ -25,25 +25,16 @@ class ManualPointsLayer(Points):
         self._bind_shortcuts()
 
     def _bind_shortcuts(self):
-        @self.bind_key("Control-Z", overwrite=True)
-        def _undo(_viewer):
-            self.undo()
+        def _bind_shortcut(shortcut, action):
+            @self.bind_key(shortcut, overwrite=True)
+            def _run(_viewer):
+                action()
 
-        @self.bind_key("Meta-Z", overwrite=True)
-        def _undo_meta(_viewer):
-            self.undo()
+        for shortcut in ("Control-Z", "Meta-Z"):
+            _bind_shortcut(shortcut, self.undo)
 
-        @self.bind_key("Control-Y", overwrite=True)
-        def _redo(_viewer):
-            self.redo()
-
-        @self.bind_key("Control-Shift-Z", overwrite=True)
-        def _redo_shift(_viewer):
-            self.redo()
-
-        @self.bind_key("Meta-Shift-Z", overwrite=True)
-        def _redo_meta_shift(_viewer):
-            self.redo()
+        for shortcut in ("Control-Y", "Control-Shift-Z", "Meta-Shift-Z"):
+            _bind_shortcut(shortcut, self.redo)
 
     def _snapshot_data(self) -> np.ndarray:
         return np.asarray(self.data).copy()

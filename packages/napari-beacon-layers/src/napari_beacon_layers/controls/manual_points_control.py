@@ -36,5 +36,4 @@ class CustomQtManualPointsControls(QtPointsControls):
             self._redo_button.setEnabled(layer.can_redo)
 
         layer.events.history.connect(_sync_buttons)
-        layer.events.data.connect(_sync_buttons)
         _sync_buttons()
