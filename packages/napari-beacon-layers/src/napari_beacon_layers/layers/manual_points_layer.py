@@ -7,7 +7,11 @@ from napari_beacon_layers.controls.manual_points_control import CustomQtManualPo
 
 
 class ManualPointsLayer(Points):
-    """Editable points layer with undo/redo history."""
+    """Editable points layer with undo/redo history.
+
+    Emits a custom ``history`` event whenever the undo/redo state changes
+    (new snapshot, undo, redo) so UI controls can refresh enabled states.
+    """
 
     def __init__(self, data, *args, max_history=100, **kwargs):
         super().__init__(data, *args, **kwargs)
@@ -49,7 +53,8 @@ class ManualPointsLayer(Points):
             return
 
         current = self._snapshot_data()
-        if np.array_equal(current, self._history[self._history_index]):
+        previous = self._history[self._history_index]
+        if current.shape == previous.shape and np.array_equal(current, previous):
             return
 
         self._history = self._history[: self._history_index + 1]
