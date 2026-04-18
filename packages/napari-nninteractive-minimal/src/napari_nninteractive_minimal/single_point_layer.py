@@ -1,22 +1,21 @@
 from collections import deque
 from contextlib import contextmanager
-import copy
 from app_model.types import KeyCode, KeyMod
-
 import numpy as np
 from napari.layers import Points
 from napari.utils.events import Event
+import copy
+from napari_nninteractive.layers.point_layer import SinglePointLayer as nnI_SinglePointLayer
 
 from napari._qt.layer_controls.qt_layer_controls_container import layer_to_controls
-from napari_beacon_layers.controls.manual_points_control import CustomQtManualPointsControls
+from napari_nninteractive_minimal.single_point_control import CustomQtSinglePointControls
 
-
-class ManualPointsLayer(Points):
-    """Editable points layer with keyboard-driven undo/redo history.
+class SinglePointLayer(nnI_SinglePointLayer):
+    """Extended SinglePointLayer from napari-nninteractive with keyboard-driven undo/redo history.
     """
 
-    def __init__(self, data=None, *args, max_history=100, **kwargs):
-        super().__init__(data, *args, **kwargs)
+    def __init__(self, *args, max_history=100, **kwargs):
+        super().__init__(*args, **kwargs)
         self._history_limit = max(1, int(max_history))
         self._reset_history()
         self._last_history_state = self._snapshot_data()
@@ -27,9 +26,13 @@ class ManualPointsLayer(Points):
         self.events.face_color.connect(self.on_face_color_change)
         self.events.border_color.connect(self.on_border_color_change)
         self.events.size.connect(self.on_size_change)
+    
+    def _add(self, *args, **kwargs):
+        with self.block_history():
+            super()._add(*args, **kwargs)
 
     def _snapshot_data(self) -> np.ndarray:
-        return (np.asarray(self.data).copy(), list(self.selected_data), self.face_color.copy(), self.border_color.copy(), self.size.copy())
+        return (np.asarray(self.data).copy(), list(self.selected_data), self.prompt_index, self.face_color.copy(), self.border_color.copy(), self.size.copy())
 
     def _reset_history(self, event: Event | None = None) -> None:
         self._undo_history = deque(maxlen=self._history_limit)
@@ -70,7 +73,6 @@ class ManualPointsLayer(Points):
 
         current = self._snapshot_data()
         previous = self._last_history_state
-
         self._save_history((copy.copy(previous), copy.copy(current)))
         self._last_history_state = current
 
@@ -95,7 +97,7 @@ class ManualPointsLayer(Points):
             previous_data, next_data = history_item
             restored = previous_data if undoing else next_data
             self.data = restored[0].copy()
-            self.selected_data = set(restored[1])
+            self.selected_data = set()
             if restored[0].shape[0] > 0:
                 self.face_color = restored[2].copy()
                 self.border_color = restored[3].copy()
@@ -117,13 +119,15 @@ class ManualPointsLayer(Points):
         self.events.redo()
         return redo
 
-# register the custom layer controls
-layer_to_controls[ManualPointsLayer] = CustomQtManualPointsControls
 
-@ManualPointsLayer.bind_key(KeyMod.CtrlCmd | KeyCode.KeyZ, overwrite=True)
-def undo(layer: ManualPointsLayer) -> None:
+# register the custom layer controls
+layer_to_controls[SinglePointLayer] = CustomQtSinglePointControls
+
+@SinglePointLayer.bind_key(KeyMod.CtrlCmd | KeyCode.KeyZ, overwrite=True)
+def undo(layer: SinglePointLayer) -> None:
     layer.undo()
 
-@ManualPointsLayer.bind_key(KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyZ, overwrite=True)
-def redo(layer: ManualPointsLayer) -> None:
+
+@SinglePointLayer.bind_key(KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyZ, overwrite=True)
+def redo(layer: SinglePointLayer) -> None:
     layer.redo()
