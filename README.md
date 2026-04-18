@@ -53,6 +53,7 @@ The repository also contains some utility plugins:
 - [**napari-shape-based-interpolation**](./packages/napari-shape-based-interpolation/) — shape based interpolation of labels between keyframes. (As an alternative to AI-based methods.)
 - [**napari-quick-view**](./packages/napari-quick-view/) — quickly cycle through different images.
 - [**napari-view-switch**](./packages/napari-view-switch/) — quickly cycle through axial, coronal, and sagittal views with named buttons.
+- [**napari-beacon-ui**](./packages/napari-beacon-ui/) — toggle BEACON-specific napari UI customizations (toolbar buttons, orientation buttons, and layer-list safeguards).
 
 ---
 

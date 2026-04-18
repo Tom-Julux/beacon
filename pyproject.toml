@@ -12,6 +12,7 @@ dependencies = [
     "napari-edit-log", 
     "napari-quick-view",
     "napari-beacon-layers",
+    "napari-beacon-ui",
     "napari-inverted-scrolling",
     "napari-manual-segmentation",
     "napari-nninteractive-minimal",
@@ -31,6 +32,7 @@ napari-edit-log = { workspace = true }
 napari-quick-view = { workspace = true }
 napari-view-switch = { workspace = true }
 napari-beacon-layers = { workspace = true }
+napari-beacon-ui = { workspace = true }
 napari-inverted-scrolling = { workspace = true }
 napari-manual-segmentation = { workspace = true }
 napari-nninteractive-minimal = { workspace = true }
