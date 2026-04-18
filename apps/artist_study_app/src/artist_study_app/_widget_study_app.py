@@ -35,11 +35,9 @@ from qtpy.QtWidgets import (
     QLabel,
     QSizePolicy,
     QVBoxLayout,
-    QPushButton,
     QWidget,
     QMessageBox
 )
-from qtpy.QtCore import Qt  # type: ignore[attr-defined]
 import glob
 
 import SimpleITK as sitk
@@ -47,9 +45,8 @@ from napari_beacon_layers import FixedImageLayer, PreviewLabelsLayer, ManualLabe
 from napari_manual_segmentation import ManualSegmentationWidget
 from napari_manual_segmentation.utils.utils import ColorMapper, determine_layer_index
 
-from .multi_viewer import setup_multiple_viewer_widget, MultipleViewerWidget
-
 from napari_edit_log.edit_log import NapariEditLog
+from napari_beacon_ui import apply_artist_study_ui, revert_artist_study_ui
 from napari_inverted_scrolling import invert_scrolling, reset_scrolling, is_inverted
 from .acknowledgements import setup_acknowledgements
 from .segmentation_metrics_preview import SegmentationMetricsWidget
@@ -603,119 +600,10 @@ class StudyAppFullWidget(QWidget):
         #self.edit_log.clear()
 
     def modify_napari_ui(self):
-        viewer = self._viewer
-
-        def set_axial_view():
-            viewer.dims.order = (0,1,2)
-        def set_coronal_view():
-            viewer.dims.order = (1,0,2)
-        def set_saggital_view():
-            viewer.dims.order = (2,0,1)
-        axial_button = QPushButton()
-        axial_button.setText("A")
-        axial_button.clicked.connect(set_axial_view)
-        axial_button.setStyleSheet("""
-            min-width : 28px;
-            max-width : 28px;
-            min-height : 28px;
-            max-height : 28px;
-            padding: 0px;
-            """)
-           
-        viewer.window._qt_viewer._viewerButtons.layout().insertWidget(-1,axial_button)
-        axial_button = QPushButton()
-        axial_button.setText("C")
-        axial_button.clicked.connect(set_coronal_view)
-        axial_button.setStyleSheet("""
-            min-width : 28px;
-            max-width : 28px;
-            min-height : 28px;
-            max-height : 28px;
-            padding: 0px;
-            """)
-        viewer.window._qt_viewer._viewerButtons.layout().insertWidget(-1,axial_button)
-        axial_button = QPushButton()
-        axial_button.setText("S")
-        axial_button.clicked.connect(set_saggital_view)
-        axial_button.setStyleSheet("""
-            min-width : 28px;
-            max-width : 28px;
-            min-height : 28px;
-            max-height : 28px;
-            padding: 0px;
-            """)
-        viewer.window._qt_viewer._viewerButtons.layout().insertWidget(-1,axial_button)
-
-        def show_multi_view():
-
-            if hasattr(self, 'multi_viewer_widget'):
-                viewer.window.remove_dock_widget(self.multi_viewer_widget)
-                #self.multi_viewer_widget.close()
-                del self.multi_viewer_widget
-            else:
-                self.multi_viewer_widget = MultipleViewerWidget(viewer=viewer, orientation=Qt.Orientation.Vertical)
-                viewer.window.add_dock_widget(
-                    self.multi_viewer_widget, name="Multi-View", area="right"
-                )
-                self.multi_viewer_widget.parent()._close_btn = False
-                self.multi_viewer_widget.parent().title.float_button.setHidden(True)
-
-                #self.multi_viewer_widget.setParent(self, Qt.Window)
-                #self.multi_viewer_widget.setWindowFlags(self.multi_viewer_widget.windowFlags() | Qt.Tool)
-                #self.multi_viewer_widget.show()
-
-        #axial_button = QPushButton()
-        #axial_button.setText("M")
-        #axial_button.clicked.connect(show_multi_view)
-        #axial_button.setStyleSheet("""
-        #    min-width : 28px;
-        #    max-width : 28px;
-        #    min-height : 28px;
-        #    max-height : 28px;
-        #    padding: 0px;
-        #    """)
-        #viewer.window._qt_viewer._viewerButtons.layout().insertWidget(-1,axial_button)
-
-        # Hide viewer buttons since we offer our own functionality
-        viewer.window._qt_viewer._viewerButtons.rollDimsButton.setHidden(True)
-        viewer.window._qt_viewer._viewerButtons.transposeDimsButton.setHidden(True)
-        viewer.window._qt_viewer._viewerButtons.consoleButton.setHidden(True)
-        viewer.window._qt_viewer._viewerButtons.gridViewButton.setHidden(True)
-        viewer.window._qt_viewer._viewerButtons.ndisplayButton.setHidden(True)
-
-        # Hide layer list buttons
-        viewer.window._qt_viewer._layersButtons.setHidden(True)
-
-        # Hotwire to disable delete/backspace/enter keys in layer list
-        self._prev_layer_keyPressEvent_handler = viewer.window._qt_viewer._layers.keyPressEvent
-        def new_func(e):
-            if e is None:
-                return
-            if e.key() in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete):
-                e.ignore()
-            else:
-                self._prev_layer_keyPressEvent_handler(e)
-        viewer.window._qt_viewer._layers.keyPressEvent = new_func
+        apply_artist_study_ui(self._viewer)
     
     def revert_napari_ui(self):
-        viewer = self._viewer
-        viewer.window._qt_viewer._viewerButtons.rollDimsButton.setHidden(False)
-        viewer.window._qt_viewer._viewerButtons.transposeDimsButton.setHidden(False)
-        viewer.window._qt_viewer._viewerButtons.consoleButton.setHidden(False)
-        viewer.window._qt_viewer._viewerButtons.gridViewButton.setHidden(False)
-        viewer.window._qt_viewer._viewerButtons.ndisplayButton.setHidden(False)
-
-        viewer.window._qt_viewer._layersButtons.setHidden(False)
-
-        viewer.window._qt_viewer._layers.keyPressEvent = self._prev_layer_keyPressEvent_handler
-        del self._prev_layer_keyPressEvent_handler
-
-        for i in range(3):
-            viewer.window._qt_viewer._viewerButtons.layout().removeWidget(
-                viewer.window._qt_viewer._viewerButtons.layout().itemAt(
-                    viewer.window._qt_viewer._viewerButtons.layout().count()-1
-                ).widget()
-            )
+        revert_artist_study_ui(self._viewer)
 
     def showEvent(self, event):
         pass

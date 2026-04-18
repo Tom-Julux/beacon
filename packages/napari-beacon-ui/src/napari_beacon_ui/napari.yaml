@@ -1,0 +1,33 @@
+name: napari-beacon-ui
+display_name: Beacon UI
+visibility: hidden
+categories: ["Utilities"]
+contributions:
+  commands:
+    - id: "napari-beacon-ui.apply_artist_study_ui"
+      title: "Apply BEACON UI"
+      python_name: "napari_beacon_ui:apply_artist_study_ui"
+    - id: "napari-beacon-ui.revert_artist_study_ui"
+      title: "Revert BEACON UI"
+      python_name: "napari_beacon_ui:revert_artist_study_ui"
+    - id: "napari-beacon-ui.toggle_artist_study_ui"
+      title: "Toggle BEACON UI"
+      python_name: "napari_beacon_ui:toggle_artist_study_ui"
+    - id: "napari-beacon-ui.toggle_orientation_buttons"
+      title: "Toggle Orientation Buttons"
+      python_name: "napari_beacon_ui:toggle_orientation_buttons"
+    - id: "napari-beacon-ui.hide_viewer_buttons"
+      title: "Hide Viewer Buttons"
+      python_name: "napari_beacon_ui:hide_viewer_buttons"
+    - id: "napari-beacon-ui.show_viewer_buttons"
+      title: "Show Viewer Buttons"
+      python_name: "napari_beacon_ui:show_viewer_buttons"
+    - id: "napari-beacon-ui.toggle_layer_controls"
+      title: "Toggle Layer Controls Lock"
+      python_name: "napari_beacon_ui:toggle_layer_controls"
+    - id: "napari-beacon-ui.beacon_ui_widget"
+      title: "Beacon UI"
+      python_name: "napari_beacon_ui:BeaconUIWidget"
+  widgets:
+    - command: "napari-beacon-ui.beacon_ui_widget"
+      display_name: Beacon UI
