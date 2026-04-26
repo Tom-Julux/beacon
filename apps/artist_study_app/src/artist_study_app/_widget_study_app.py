@@ -438,10 +438,11 @@ class StudyAppFullWidget(QWidget):
         self._next_object_used = False
 
         if self.study_protocol.get("disable_next_object_after_first_use", False):
-            if self.manual_segmentation_widget is not None:
-                self.manual_segmentation_widget.enable_next_object()
-            if self.automatic_segmentation_widget is not None:
-                self.automatic_segmentation_widget.enable_next_object()
+            if self.manual_segmentation_widget is not None and self.manual_segmentation_widget.session_cfg is not None:
+                self.manual_segmentation_widget.next_object_button.setEnabled(True)
+            if self.automatic_segmentation_widget is not None and self.automatic_segmentation_widget.session_cfg is not None and self.automatic_segmentation_widget.label_layer_name in self._viewer.layers:
+                # In the nnInteractiveWidget base class, the "Next Object" button is named reset_button
+                self.automatic_segmentation_widget.reset_button.setEnabled(True)
 
         # reload edit log if existing
         with self.edit_log.events.cleared.blocker():
