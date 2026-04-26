@@ -56,6 +56,12 @@ class nnInteractiveWidgetMinimal(nnInteractiveWidget):
 
         #self._viewer.layers.selection.events.active.connect(on_interaction)
 
+    def enable_next_object(self):
+        """Re-enable the next object button if a valid, active session exists."""
+        if self.session_cfg is not None and self.label_layer_name in self._viewer.layers:
+            # In the nnInteractiveWidget base class, the "Next Object" button is named reset_button
+            self.reset_button.setEnabled(True)
+
     def add_preview_label_layer(self, data, name) -> None:
         """
         Check if a layer with the layer_name already exists. If yes rename this by adding an index

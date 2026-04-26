@@ -257,6 +257,11 @@ class ManualSegmentationWidget(QWidget):
         self.reset_interaction_button.setDisabled(False)
         self.next_object_button.setDisabled(False)
 
+    def enable_next_object(self):
+        """Re-enable the next object button if a valid session exists."""
+        if self.session_cfg is not None:
+            self.next_object_button.setEnabled(True)
+
     def on_reset_interactions(self):
         """Reset only the current interaction"""
         if self.labels_layer is not None:

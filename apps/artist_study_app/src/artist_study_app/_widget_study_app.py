@@ -437,6 +437,12 @@ class StudyAppFullWidget(QWidget):
 
         self._next_object_used = False
 
+        if self.study_protocol.get("disable_next_object_after_first_use", False):
+            if self.manual_segmentation_widget is not None:
+                self.manual_segmentation_widget.enable_next_object()
+            if self.automatic_segmentation_widget is not None:
+                self.automatic_segmentation_widget.enable_next_object()
+
         # reload edit log if existing
         with self.edit_log.events.cleared.blocker():
             self.edit_log.clear()
