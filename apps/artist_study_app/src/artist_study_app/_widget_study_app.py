@@ -800,6 +800,7 @@ class StudyAppFullWidget(QWidget):
 
         if self.study_protocol.get("disable_next_object_after_first_use", False) and not self._next_object_used:
             self._next_object_used = True
+            # In the nnInteractiveWidget base class, the "Next Object" button is named reset_button
             self.automatic_segmentation_widget.reset_button.setDisabled(True)
 
     def _on_nninteractive_reset_interactions(self):
