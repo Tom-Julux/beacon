@@ -238,7 +238,7 @@ class ManualSegmentationWidget(QWidget):
             self.session_cfg["rotate"] = _rot
 
         # Apply superresolution: scale up in-plane (Y, X) dimensions while preserving physical extent
-        if self.superresolution > 1:
+        if self.superresolution > 1 and self.session_cfg["ndim"] == 3:
             sr = self.superresolution
             shape = self.session_cfg["shape"]
             scale = self.session_cfg["scale"]

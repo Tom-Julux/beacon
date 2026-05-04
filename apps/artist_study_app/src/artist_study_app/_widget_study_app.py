@@ -420,8 +420,7 @@ class StudyAppFullWidget(QWidget):
                 self._viewer.add_layer(seg_layer)
         
         # setup segmentation method widget
-        superresolution = int(self.study_protocol.get("superresolution", 1))
-        if method == "manual":
+        superresolution = max(1, min(5, int(self.study_protocol.get("superresolution", 1))))        if method == "manual":
             if self.automatic_segmentation_widget is not None:
                 self.automatic_segmentation_widget.parent().hide()
             if self.manual_segmentation_widget is None:
