@@ -152,7 +152,8 @@ class SegmentationMetricsWidget(QWidget):
             zoom_factors = tuple(s1 / s2 for s1, s2 in zip(data1.shape, data2.shape))
             try:
                 data2 = zoom(data2, zoom_factors, order=0).astype(data2.dtype)
-            except Exception:
+            except Exception as exc:
+                print(f"Segmentation metrics: resampling failed ({exc})")
                 self.metrics_label.setText("DSC: n/a\nHD95: n/a")
                 return
             if data2.shape != data1.shape:

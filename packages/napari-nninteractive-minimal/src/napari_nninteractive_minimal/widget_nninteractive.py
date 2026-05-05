@@ -107,6 +107,12 @@ class nnInteractiveWidgetMinimal(nnInteractiveWidget):
             scale = np.array(self.session_cfg["scale"])
             scale = np.array([scale[0], scale[1] / sr, scale[2] / sr])
         else:
+            if sr > 1:
+                import warnings
+                warnings.warn(
+                    f"superresolution={sr} requested but data.ndim={data.ndim} (expected 3). "
+                    "Superresolution is only supported for 3D data; creating layer at original resolution."
+                )
             scale = self.session_cfg["scale"]
 
         label_layer = ManualLabelsLayer(
