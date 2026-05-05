@@ -5,6 +5,7 @@ from magicgui import magicgui
 from typing import TYPE_CHECKING
 from functools import partial
 import numpy as np
+from scipy.ndimage import zoom
 
 from napari.utils.notifications import show_info, show_warning, show_error, show_console_notification
 from napari import Viewer
@@ -15,6 +16,7 @@ from napari_toolkit.utils import set_value
 from napari_toolkit.data_structs import setup_list
 from napari_toolkit.utils.widget_getter import get_value
 from napari_toolkit.widgets import *
+from napari_toolkit.widgets import setup_checkbox, setup_pushbutton
 from qtpy.QtWidgets import (
     QLabel,
     QSizePolicy,
@@ -50,6 +52,22 @@ class SegmentationMetricsWidget(QWidget):
 
         self.metrics_label = setup_label(layout, "DSC: --\nHD95: --")
 
+        self.auto_update_ckbx = setup_checkbox(
+            None,
+            "Auto Update",
+            True,
+            tooltips="Automatically recompute metrics on a timer and on layer changes.",
+            function=self._on_auto_update_changed,
+        )
+        self.compute_btn = setup_pushbutton(
+            None,
+            "Compute",
+            function=self.update_segmentation_metrics,
+            tooltips="Manually compute segmentation metrics now.",
+        )
+        self.compute_btn.setEnabled(False)
+        hstack(layout, [self.auto_update_ckbx, self.compute_btn], stretch=[1, 0])
+
         self.metrics_timer = QTimer(self)
         self.metrics_timer.setInterval(update_interval_ms)
         self.metrics_timer.timeout.connect(self.update_segmentation_metrics)
@@ -58,9 +76,20 @@ class SegmentationMetricsWidget(QWidget):
         """Check if both layers are available."""
         return self._get_layer_1() is not None and self._get_layer_2() is not None
 
+    def _on_auto_update_changed(self):
+        """Called when the Auto Update checkbox is toggled."""
+        auto = self.auto_update_ckbx.isChecked()
+        self.compute_btn.setEnabled(not auto)
+        if auto:
+            self.metrics_timer.start()
+            self.update_segmentation_metrics()
+        else:
+            self.metrics_timer.stop()
+
     def start_updates(self):
-        self.metrics_timer.start()
-        self.update_segmentation_metrics()
+        if self.auto_update_ckbx.isChecked():
+            self.metrics_timer.start()
+            self.update_segmentation_metrics()
 
     def stop_updates(self):
         self.metrics_timer.stop()
@@ -131,7 +160,8 @@ class SegmentationMetricsWidget(QWidget):
 
     def on_layers_changed(self):
         """Called when either layer selection changes."""
-        self.update_segmentation_metrics()
+        if self.auto_update_ckbx.isChecked():
+            self.update_segmentation_metrics()
 
     def update_segmentation_metrics(self):
         """Compute and display metrics between the two selected layers."""
@@ -146,11 +176,25 @@ class SegmentationMetricsWidget(QWidget):
         data2 = np.asarray(layer2.data)
 
         if data1.shape != data2.shape:
-            self.metrics_label.setText("DSC: n/a\nHD95: n/a")
-            return
+            # Try to resample data2 onto data1's grid (e.g. superresolution segmentation vs
+            # normal-resolution reference mask).  Use nearest-neighbour to preserve label values.
+            zoom_factors = tuple(s1 / s2 for s1, s2 in zip(data1.shape, data2.shape))
+            try:
+                data2 = zoom(data2, zoom_factors, order=0).astype(data2.dtype)
+            except Exception as exc:
+                print(f"Segmentation metrics: resampling failed ({exc})")
+                self.metrics_label.setText("DSC: n/a\nHD95: n/a")
+                return
+            if data2.shape != data1.shape:
+                self.metrics_label.setText("DSC: n/a\nHD95: n/a")
+                return
+
+        # Use the reference layer's physical spacing (abs to remove the z-flip sign)
+        spacing_zyx = tuple(abs(s) for s in layer1.scale)
+        spacing_xyz = spacing_zyx[::-1]
 
         # Compute metrics between layers where values > 0
-        dsc, hd95 = self._compute_dsc_hd95(data1, data2)
+        dsc, hd95 = self._compute_dsc_hd95(data1, data2, spacing_xyz=spacing_xyz)
         hd95_text = "n/a" if np.isnan(hd95) else f"{hd95:.2f} mm"
         self.metrics_label.setText(f"DSC: {dsc:.4f}\nHD95: {hd95_text}")
         

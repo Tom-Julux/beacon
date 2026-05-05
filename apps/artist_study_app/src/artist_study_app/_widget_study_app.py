@@ -410,11 +410,17 @@ class StudyAppFullWidget(QWidget):
                 )
                 seg_layer.colormap = self.colormap[i%self.colormap.num_colors]
                 seg_layer.contour = 1
-                seg_layer.scale = np.array([-1,1,1]) * np.array(img_sitk.GetSpacing()[::-1])  # reverse for napari xyz vs sitk zyx
+                if seg.shape == img.shape:
+                    # Normal resolution: use image spacing
+                    seg_layer.scale = np.array([-1,1,1]) * np.array(img_sitk.GetSpacing()[::-1])
+                else:
+                    # Superresolution label: use spacing saved in the file
+                    seg_layer.scale = np.array([-1,1,1]) * np.array(seg_sitk.GetSpacing()[::-1])
 
                 self._viewer.add_layer(seg_layer)
         
         # setup segmentation method widget
+        superresolution = max(1, min(5, int(self.study_protocol.get("superresolution", 1))))
         if method == "manual":
             if self.automatic_segmentation_widget is not None:
                 self.automatic_segmentation_widget.parent().hide()
@@ -427,6 +433,7 @@ class StudyAppFullWidget(QWidget):
             else:
                 self.manual_segmentation_widget.allow_close = False
                 self.manual_segmentation_widget.parent().show()
+            self.manual_segmentation_widget.superresolution = superresolution
         elif method == "nnInteractive":
             if self.manual_segmentation_widget is not None:
                 self.manual_segmentation_widget.allow_close = True
@@ -440,6 +447,7 @@ class StudyAppFullWidget(QWidget):
                 self.automatic_segmentation_widget.parent()._close_btn = False
             else:
                 self.automatic_segmentation_widget.parent().show()
+            self.automatic_segmentation_widget.superresolution = superresolution
         
         self.update_task_counter()
 
@@ -501,6 +509,10 @@ class StudyAppFullWidget(QWidget):
                 )
                 layer_data = layer.data.astype(np.uint8)
                 sitk_img = sitk.GetImageFromArray(layer_data)
+                # Store layer spacing (abs to remove z-flip) so superresolution
+                # labels can be reloaded with the correct scale
+                spacing_zyx = np.abs(layer.scale)
+                sitk_img.SetSpacing(spacing_zyx[::-1].tolist())  # sitk expects XYZ order
                 sitk.WriteImage(sitk_img, output_path, useCompression=True)
                 
                 #show_info(f"Saved layer {layer.name} to {output_path}")
@@ -607,6 +619,10 @@ class StudyAppFullWidget(QWidget):
                 )
                 layer_data = layer.data.astype(np.uint8)
                 sitk_img = sitk.GetImageFromArray(layer_data)
+                # Store layer spacing (abs to remove z-flip) so superresolution
+                # labels can be reloaded with the correct scale
+                spacing_zyx = np.abs(layer.scale)
+                sitk_img.SetSpacing(spacing_zyx[::-1].tolist())  # sitk expects XYZ order
                 sitk.WriteImage(sitk_img, output_path, useCompression=True)
                 
                 #show_info(f"Saved layer {layer.name} to {output_path}")
