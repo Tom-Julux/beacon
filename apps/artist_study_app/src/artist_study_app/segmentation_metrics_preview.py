@@ -5,6 +5,7 @@ from magicgui import magicgui
 from typing import TYPE_CHECKING
 from functools import partial
 import numpy as np
+from scipy.ndimage import zoom
 
 from napari.utils.notifications import show_info, show_warning, show_error, show_console_notification
 from napari import Viewer
@@ -146,11 +147,24 @@ class SegmentationMetricsWidget(QWidget):
         data2 = np.asarray(layer2.data)
 
         if data1.shape != data2.shape:
-            self.metrics_label.setText("DSC: n/a\nHD95: n/a")
-            return
+            # Try to resample data2 onto data1's grid (e.g. superresolution segmentation vs
+            # normal-resolution reference mask).  Use nearest-neighbour to preserve label values.
+            zoom_factors = tuple(s1 / s2 for s1, s2 in zip(data1.shape, data2.shape))
+            try:
+                data2 = zoom(data2, zoom_factors, order=0).astype(data2.dtype)
+            except Exception:
+                self.metrics_label.setText("DSC: n/a\nHD95: n/a")
+                return
+            if data2.shape != data1.shape:
+                self.metrics_label.setText("DSC: n/a\nHD95: n/a")
+                return
+
+        # Use the reference layer's physical spacing (abs to remove the z-flip sign)
+        spacing_zyx = tuple(abs(s) for s in layer1.scale)
+        spacing_xyz = spacing_zyx[::-1]
 
         # Compute metrics between layers where values > 0
-        dsc, hd95 = self._compute_dsc_hd95(data1, data2)
+        dsc, hd95 = self._compute_dsc_hd95(data1, data2, spacing_xyz=spacing_xyz)
         hd95_text = "n/a" if np.isnan(hd95) else f"{hd95:.2f} mm"
         self.metrics_label.setText(f"DSC: {dsc:.4f}\nHD95: {hd95_text}")
         
